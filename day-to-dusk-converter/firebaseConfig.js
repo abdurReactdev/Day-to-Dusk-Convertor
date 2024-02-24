@@ -2,7 +2,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
-
+import { doc, getFirestore, setDoc } from "firebase/firestore";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
@@ -23,4 +23,25 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const storage = getStorage(app);
+export const db = getFirestore(app);
+
+export const createDoc = async () => {
+  if (typeof window !== "undefined") {
+    if (localStorage?.getItem("userDetails") !== null) {
+      console.log("hello");
+      const result = await setDoc(
+        doc(
+          db,
+          "OutputImages",
+          JSON?.parse(localStorage?.getItem("userDetails"))?.uid
+        ),
+        {},
+        {
+          merge: true,
+        }
+      );
+    }
+  }
+};
+
 export default app

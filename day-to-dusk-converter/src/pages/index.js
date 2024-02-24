@@ -5,12 +5,13 @@ import Dropzone from "react-dropzone";
 import Navbar from "@/components/Navbar";
 import axios from "axios";
 import { uploadImage } from "../../utils/uploadFile";
+import Modal from "@/components/Modal";
 
 const inter = Inter({ subsets: ["latin"] });
 
 export default function Home() {
   const router = useRouter();
-  const [image, setImage] = useState();
+  const [loading, setLodaing] = useState(false);
   const [outputImage, setOutputImage] = useState("");
 
   useEffect(() => {
@@ -19,43 +20,60 @@ export default function Home() {
     }
   }, []);
 
+  const closeModal = () => {
+    setOutputImage("");
+  };
+
   return (
     <>
       <Navbar />
-      <div className="bg-white">
-        \
+      <div className="bg-white container mx-auto">
+        <div class="mb-4 md:mb-10 mt-8 md:mt-20">
+          <div class="leading-9 font-semibold text-center text-[#19191B] text-left text-3xl md:text-5xl mb-4">
+            Day to Dusk
+            <span class="font-bold z-10 text-blue-500 ml-2 relative">
+              <span class="z-10">with one&nbsp;click</span>
+            </span>
+          </div>
+          <div class="text-[#19191B] text-xl text-center">
+            Upload a picture and our AI will tranform it from day to dusk.
+          </div>
+        </div>
         <label
           className="block mb-2 text-sm font-medium text-gray-900 dark:text-white"
           for="file_input"
         >
           Upload file
         </label>
-        <input
-          className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-          type="file"
-          onChange={async (e) => {
-            await setImage(e.target.files[0]);
-            console.log("Images", e.target.files[0]);
-            const url = await uploadImage(image);
-
-            // let imageUrl;
-            const response = await axios.post("/api/hello", {
-              imageUrl: url,
-            });
-            setOutputImage(response.data.imagePath);
-          }}
-        />
         <Dropzone
           onDrop={async (acceptedFiles) => {
-            setImage(acceptedFiles[0]);
-            console.log("Images", acceptedFiles);
-            const url = await uploadImage(image);
+            try {
+              setLodaing(true);
+              const imageTypes = [
+                "image/jpeg",
+                "image/png",
+                "image/gif",
+                "image/bmp",
+              ];
+              if (imageTypes.includes(acceptedFiles[0].type)) {
+                console.log("Images", acceptedFiles[0]);
+                const url = await uploadImage(acceptedFiles[0]);
 
-            // let imageUrl;
-            const response = await axios.post("/api/hello", {
-              imageUrl: url,
-            });
-            setOutputImage(response.data.imagePath);
+                // let imageUrl;
+                const response = await axios.post("/api/hello", {
+                  imageUrl: url,
+                  userId: JSON.parse(localStorage.getItem("userDetails")).uid,
+                });
+                setLodaing(false);
+                setOutputImage(response.data.imagePath);
+              } else {
+                alert("Please only enter file type of image.");
+              }
+            } catch {
+              alert("Something went wrong!\nPlease try again.");
+              setLodaing(false);
+              setOutputImage("");
+            }
           }}
         >
           {({ getRootProps, getInputProps }) => (
@@ -92,7 +110,23 @@ export default function Home() {
             </section>
           )}
         </Dropzone>
-        {outputImage && <img src={outputImage} />}
+        {loading && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black opacity-50 z-50">
+            <div class="flex justify-center items-center h-screen opacity-1">
+              <div class="leading-9 font-semibold text-blue-500 text-left text-3xl md:text-5xl mb-4">
+                Please wait while your image is being tranformed ...
+              </div>
+            </div>
+          </div>
+        )}
+        <Modal
+          isOpen={outputImage ? true : false}
+          onClose={closeModal}
+          imageUrl={outputImage}
+        />
+        {outputImage && (
+          <div className="fixed top-0 left-0 w-full h-full bg-black opacity-50 z-40"></div>
+        )}
       </div>
     </>
   );

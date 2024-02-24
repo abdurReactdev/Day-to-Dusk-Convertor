@@ -1,9 +1,11 @@
 // pages/api/convertImage.js
 import Replicate from "replicate";
+import { arrayUnion, doc, updateDoc } from "firebase/firestore";
+import { db } from "../../../firebaseConfig";
 
 export default async function handler(req, res) {
   try {
-    const { imageUrl } = req.body;
+    const { imageUrl, userId } = req.body;
 
     console.log("image", imageUrl);
 
@@ -25,7 +27,13 @@ export default async function handler(req, res) {
         },
       }
     );
-    console.log(output);
+
+    const washingtonRef = doc(db, "OutputImages", userId);
+
+    // Set the "capital" field of the city 'DC'
+    await updateDoc(washingtonRef, {
+      images: arrayUnion(`${output}`),
+    });
 
     res.status(200).json({
       success: true,
@@ -34,6 +42,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error("Error converting image:", error);
-    res.status(500).json({ success: false, error: "Internal Server Error" });
+    res.status(500).json({ success: false, error: error });
   }
 }
